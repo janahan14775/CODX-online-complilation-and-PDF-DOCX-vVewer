@@ -36,6 +36,26 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+
+    resetOtp: {
+      type: String,
+      default: "",
+    },
+
+    resetOtpExpires: {
+      type: Date,
+    },
+
+    loginHistory: [
+      {
+        ip: String,
+        userAgent: String,
+        date: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   {
     timestamps: true,

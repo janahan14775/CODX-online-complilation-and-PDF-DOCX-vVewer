@@ -1,4 +1,4 @@
-require("dotenv").config();
+require("dotenv").config({ override: true });
 
 const express = require("express");
 const cors = require("cors");
@@ -7,6 +7,10 @@ const connectDB = require("./db");
 
 const authRoutes = require("./routes/authRoutes");
 const runRoutes = require("./routes/runRoutes");
+const projectRoutes = require("./routes/projectRoutes");
+const documentRoutes = require("./routes/documentRoutes");
+const fileRoutes = require("./routes/fileRoutes");
+
 
 const app = express();
 
@@ -38,6 +42,23 @@ app.use(
   "/api/run",
   runRoutes
 );
+
+app.use(
+  "/api/projects",
+  projectRoutes
+);
+
+app.use(
+  "/api/documents",
+  documentRoutes
+);
+
+app.use(
+  "/api/files",
+  fileRoutes
+);
+
+
 
 // Test Route
 app.get("/", (req, res) => {

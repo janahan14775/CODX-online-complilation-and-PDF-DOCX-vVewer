@@ -7,6 +7,10 @@ const {
   verifyOTP,
   login,
   getProfile,
+  googleLogin,
+  forgotPassword,
+  resetPassword,
+  updateProfile,
 } = require(
   "../controllers/authController"
 );
@@ -31,6 +35,31 @@ router.post(
 router.post(
   "/login",
   login
+);
+
+// Google Login
+router.post(
+  "/google-login",
+  googleLogin
+);
+
+// Forgot Password
+router.post(
+  "/forgot-password",
+  forgotPassword
+);
+
+// Reset Password
+router.post(
+  "/reset-password",
+  resetPassword
+);
+
+// Update Profile
+router.put(
+  "/profile/update",
+  authMiddleware,
+  updateProfile
 );
 
 // Get Logged In User Profile
