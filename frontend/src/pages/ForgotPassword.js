@@ -22,7 +22,7 @@ function ForgotPassword() {
     try {
       setLoading(true);
       const response = await axios.post(
-        "http://localhost:5000/api/auth/forgot-password",
+        `${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/auth/forgot-password`,
         { email }
       );
       setSuccess(response.data.message || "OTP sent to email");

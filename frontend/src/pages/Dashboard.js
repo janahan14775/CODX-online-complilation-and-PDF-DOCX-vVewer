@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import logo from "../logo.jpg";
 
-const API = "http://localhost:5000/api";
+const API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 function getToken() {
   return localStorage.getItem("token");
@@ -222,10 +223,8 @@ export default function Dashboard() {
       {/* Sidebar */}
       <div style={{ width: "220px", background: "#111827", borderRight: "1px solid #1f2937", display: "flex", flexDirection: "column", flexShrink: 0 }}>
         <div style={{ padding: "24px 20px 16px" }}>
-          <div style={{ fontWeight: 800, fontSize: "18px", background: "linear-gradient(135deg,#38bdf8,#818cf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-            OnlineCodX
-          </div>
-          <div style={{ color: "#475569", fontSize: "12px", marginTop: "2px" }}>Cloud IDE Platform</div>
+          <img src={logo} alt="OnlineCodX" style={{ height: "40px", borderRadius: "8px" }} />
+          <div style={{ color: "#475569", fontSize: "12px", marginTop: "12px" }}>Cloud IDE Platform</div>
         </div>
 
         <div style={{ flex: 1, padding: "8px 12px" }}>

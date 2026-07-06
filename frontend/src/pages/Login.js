@@ -1,6 +1,7 @@
 import React, { useState, useCallback } from "react";
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
+import logo from "../logo.jpg";
 
 function Login() {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ function Login() {
     }
     try {
       setLoading(true);
-      const response = await axios.post("http://localhost:5000/api/auth/login", { email, password });
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/auth/login`, { email, password });
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("user", JSON.stringify(response.data.user));
       navigate("/dashboard");
@@ -59,7 +60,7 @@ function Login() {
           const params = new URLSearchParams(hash.substring(1));
           const idToken = params.get("id_token");
           // Send token to backend
-          axios.post("http://localhost:5000/api/auth/google-login", { token: idToken })
+          axios.post(`${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/auth/google-login`, { token: idToken })
             .then((response) => {
               localStorage.setItem("token", response.data.token);
               localStorage.setItem("user", JSON.stringify(response.data.user));
@@ -95,7 +96,7 @@ function Login() {
         className="d-none d-lg-flex"
       >
         <div style={{ color: "white" }}>
-          <h1 style={{ fontSize: "42px", fontWeight: 800, marginBottom: "16px" }}>OnlineCodX</h1>
+          <img src={logo} alt="OnlineCodX" style={{ height: "64px", marginBottom: "20px", borderRadius: "12px" }} />
           <p style={{ fontSize: "18px", opacity: 0.9, lineHeight: 1.6, marginBottom: "32px" }}>
             A professional cloud-based IDE and document management platform.
             Write, compile, and execute code in 5 languages.

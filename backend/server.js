@@ -2,6 +2,7 @@ require("dotenv").config({ override: true });
 
 const express = require("express");
 const cors = require("cors");
+const path = require("path");
 
 const connectDB = require("./db");
 
@@ -60,14 +61,21 @@ app.use(
 
 
 
-// Test Route
-app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message:
-      "Online IDE Backend Running",
+// Serve frontend
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "../frontend/build")));
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "../frontend", "build", "index.html"));
   });
-});
+} else {
+  // Test Route
+  app.get("/", (req, res) => {
+    res.json({
+      success: true,
+      message: "Online IDE Backend Running",
+    });
+  });
+}
 
 // 404 Handler
 app.use((req, res) => {

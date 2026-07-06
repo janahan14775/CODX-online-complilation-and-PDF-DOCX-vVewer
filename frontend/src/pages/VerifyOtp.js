@@ -43,7 +43,7 @@ function VerifyOtp() {
 
         const response =
           await axios.post(
-            "http://localhost:5000/api/auth/verify-otp",
+            `${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/auth/verify-otp`,
             {
               email,
               otp,

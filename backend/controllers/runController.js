@@ -9,135 +9,96 @@ exports.runCode = async (req, res) => {
       });
     }
 
-    // Map requested languages to Judge0 CE language IDs
+    // Map requested languages to JDoodle languages and version index
     const languageMap = {
-      c: 50,
-      cpp: 54,
-      java: 62,
-      javascript: 63,
-      python: 71,
+      c: { lang: "c", versionIndex: "5" }, // GCC 11.1.0
+      cpp: { lang: "cpp", versionIndex: "5" }, // GCC 11.1.0
+      java: { lang: "java", versionIndex: "4" }, // JDK 17.0.1
+      javascript: { lang: "nodejs", versionIndex: "4" }, // Node 17.1.0
+      python: { lang: "python3", versionIndex: "4" }, // Python 3.9.9
     };
 
-    const language_id = languageMap[language.toLowerCase()];
-    if (!language_id) {
+    const jDoodleConfig = languageMap[language.toLowerCase()];
+    if (!jDoodleConfig) {
       return res.status(400).json({
         success: false,
         error: "Unsupported language",
       });
     }
 
-    const apiKey = process.env.JUDGE0_API_KEY;
-    if (!apiKey) {
+    const clientId = process.env.JDOODLE_CLIENT_ID;
+    const clientSecret = process.env.JDOODLE_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
       return res.status(500).json({
         success: false,
-        error: "Judge0 API key not configured on server",
+        errorType: "Configuration Error",
+        message: "JDoodle API keys are missing in the .env file.",
       });
     }
 
-    // Prepare payload for Judge0 API
-    // We use wait=true so the API holds the connection until execution finishes.
-    const url = "https://judge0-ce.p.rapidapi.com/submissions?base64_encoded=false&wait=true";
+    // Prepare payload for JDoodle API
+    const url = "https://api.jdoodle.com/v1/execute";
     const payload = {
-      language_id,
-      source_code: code,
+      clientId,
+      clientSecret,
+      script: code,
+      language: jDoodleConfig.lang,
+      versionIndex: jDoodleConfig.versionIndex,
     };
+
+    console.log("Sending payload to JDoodle:", { ...payload, clientSecret: "***" });
 
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "X-RapidAPI-Key": apiKey,
-        "X-RapidAPI-Host": "judge0-ce.p.rapidapi.com",
       },
       body: JSON.stringify(payload),
     });
 
+    console.log("JDoodle Response Status:", response.status);
+
     if (!response.ok) {
       const errText = await response.text();
-      console.error("Judge0 API Error:", errText);
+      console.error("JDoodle API Error:", errText);
+      
+      let parsedMsg = "Failed to reach code execution engine";
+      try {
+        const errObj = JSON.parse(errText);
+        if (errObj.message) parsedMsg = errObj.message;
+        else if (errObj.error) parsedMsg = errObj.error;
+      } catch (e) {
+        parsedMsg = errText;
+      }
+
       return res.status(500).json({
         success: false,
         errorType: "Internal Server Error",
-        message: "Failed to reach code execution engine",
+        message: `JDoodle Error: ${parsedMsg}`,
+        debug: errText
       });
     }
 
     const data = await response.json();
-    const statusId = data.status?.id;
-    const statusDesc = data.status?.description || "Unknown Error";
 
-    const executionTime = data.time ? `${data.time}s` : "0s";
-    const memoryUsed = data.memory ? `${(data.memory / 1024).toFixed(2)}MB` : "0MB";
-
-    // Status 3 = Accepted (Success)
-    if (statusId === 3) {
-      return res.json({
-        success: true,
-        output: data.stdout || "",
-        executionTime,
-        memoryUsed,
-      });
-    }
-
-    // Status 6 = Compilation Error
-    if (statusId === 6) {
-      const compileOutput = data.compile_output || "";
-      // Best-effort line number extraction (e.g. file.cpp:5:10)
-      const lineMatch = compileOutput.match(/:(\d+):/);
-      const lineNumber = lineMatch ? parseInt(lineMatch[1], 10) : null;
-
-      return res.json({
+    if (data.error) {
+      return res.status(400).json({
         success: false,
-        errorType: "Compilation Error",
-        lineNumber,
-        message: compileOutput,
+        errorType: "Execution Error",
+        message: data.error,
       });
     }
 
-    // Status 5 = Time Limit Exceeded
-    if (statusId === 5) {
-      return res.json({
-        success: false,
-        errorType: "Time Limit Exceeded",
-        message: "Your program took too long to execute (Infinite Loop or slow algorithm).",
-      });
-    }
+    // JDoodle outputs memory in bytes and cpuTime in seconds
+    const memoryUsed = data.memory ? `${(data.memory / 1024).toFixed(2)}MB` : "N/A";
+    const executionTime = data.cpuTime ? `${data.cpuTime}s` : "N/A";
 
-    // Status 4 = Memory Limit Exceeded
-    if (statusId === 4) {
-      return res.json({
-        success: false,
-        errorType: "Memory Limit Exceeded",
-        message: "Your program consumed too much memory (possible memory leak or infinite recursion).",
-      });
-    }
-
-    // Status 7-12 = Runtime Errors
-    if (statusId >= 7 && statusId <= 12) {
-      let errorType = "Runtime Error";
-      let msg = data.stderr || data.message || "An exception occurred during execution.";
-
-      if (statusId === 7) errorType = "Segmentation Fault";
-      if (statusDesc.includes("NullPointer")) errorType = "Null Pointer Exception";
-      if (statusDesc.includes("StackOverflow")) errorType = "Stack Overflow Error";
-      
-      // Some generic cleanup for Python/Java tracebacks
-      if (msg.includes("ZeroDivisionError") || msg.includes("ArithmeticException")) {
-        msg = "Division by zero";
-      }
-
-      return res.json({
-        success: false,
-        errorType,
-        message: msg,
-      });
-    }
-
-    // Fallback for other errors (e.g., Internal Error)
     return res.json({
-      success: false,
-      errorType: statusDesc,
-      message: data.stderr || data.compile_output || "An unexpected error occurred.",
+      success: true,
+      output: data.output || "",
+      executionTime,
+      memoryUsed,
     });
 
   } catch (error) {

@@ -251,16 +251,10 @@ exports.googleLogin = async (req, res) => {
       email = payload.email;
       name = payload.name;
     } catch (err) {
-      console.warn("Google verification failed, attempting fallback decode:", err.message);
-      const decoded = jwt.decode(token);
-      if (decoded && decoded.email) {
-        email = decoded.email;
-        name = decoded.name || decoded.email.split("@")[0];
-      } else {
-        return res.status(400).json({
-          message: "Invalid Google Token",
-        });
-      }
+      console.warn("Google verification failed:", err.message);
+      return res.status(400).json({
+        message: "Invalid Google Token",
+      });
     }
 
     let user = await User.findOne({ email });

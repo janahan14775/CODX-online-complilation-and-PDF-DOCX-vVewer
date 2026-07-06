@@ -58,7 +58,7 @@ function Register() {
 
     try {
       setLoading(true);
-      const response = await axios.post("http://localhost:5000/api/auth/register", { name, email, password });
+      const response = await axios.post(`${process.env.REACT_APP_API_URL || "http://localhost:5000/api"}/auth/register`, { name, email, password });
       setSuccess(response.data.message || "Registration successful! Check your email.");
       setTimeout(() => navigate("/verify-otp", { state: { email } }), 1500);
     } catch (err) {

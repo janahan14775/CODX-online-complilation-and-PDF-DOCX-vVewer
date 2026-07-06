@@ -17,7 +17,7 @@ import html2pdf from "html2pdf.js";
 import { Document, Packer, Paragraph } from "docx";
 import { saveAs } from "file-saver";
 
-const API = "http://localhost:5000/api";
+const API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 function getToken() { return localStorage.getItem("token"); }
 function authHeaders() { return { Authorization: `Bearer ${getToken()}` }; }
 

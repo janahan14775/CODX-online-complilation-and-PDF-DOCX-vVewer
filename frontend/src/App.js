@@ -5,8 +5,9 @@ import CodeEditor from "./components/CodeEditor";
 import OutputPanel from "./components/Outputpanel";
 import PdfViewer from "./components/PdfViewer";
 import DocxViewer from "./components/DocxViewer";
+import logo from "./logo.jpg";
 
-const API = "http://localhost:5000/api";
+const API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
 function getToken() { return localStorage.getItem("token"); }
 function authHeaders() { return { Authorization: `Bearer ${getToken()}` }; }
@@ -108,8 +109,13 @@ export default function App() {
         setOutput("");
       }
     } catch (err) {
-      setError("Could not connect to server");
-      setErrorType("Connection Error");
+      if (err.response && err.response.data) {
+        setError(err.response.data.message || "Execution failed");
+        setErrorType(err.response.data.errorType || "Error");
+      } else {
+        setError("Could not connect to server");
+        setErrorType("Connection Error");
+      }
     } finally {
       setRunning(false);
     }
@@ -249,12 +255,12 @@ export default function App() {
 
       {/* ── Top Toolbar ── */}
       <div style={{ height: "52px", background: "#111827", borderBottom: "1px solid #1f2937", display: "flex", alignItems: "center", padding: "0 16px", gap: "10px", flexShrink: 0 }}>
-        <span
+        <img
+          src={logo}
+          alt="OnlineCodX"
           onClick={() => navigate("/dashboard")}
-          style={{ fontWeight: 800, fontSize: "15px", background: "linear-gradient(135deg,#38bdf8,#818cf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", cursor: "pointer", marginRight: "8px", whiteSpace: "nowrap" }}
-        >
-          OnlineCodX
-        </span>
+          style={{ height: "32px", cursor: "pointer", marginRight: "8px", borderRadius: "6px" }}
+        />
 
         {tbBtn(() => setShowExplorer(v => !v), "⊟ Files")}
 
