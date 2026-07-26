@@ -103,7 +103,7 @@ function Register() {
             margin: "0 auto 12px", fontSize: "22px",
           }}>✦</div>
           <h2 style={{ color: "white", fontWeight: 700, fontSize: "26px", margin: 0 }}>Create Account</h2>
-          <p style={{ color: "#64748b", marginTop: "6px", fontSize: "14px" }}>Join OnlineCodX — it's free</p>
+          <p style={{ color: "#64748b", marginTop: "6px", fontSize: "14px" }}>Join ComView — it's free</p>
         </div>
 
         {error && (

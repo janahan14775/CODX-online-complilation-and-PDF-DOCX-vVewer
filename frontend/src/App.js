@@ -34,6 +34,9 @@ export default function App() {
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
   const [errorType, setErrorType] = useState("");
+  const [stdin, setStdin] = useState("");
+  const [executionTime, setExecutionTime] = useState("");
+  const [memoryUsed, setMemoryUsed] = useState("");
   const [running, setRunning] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveStatus, setSaveStatus] = useState("");
@@ -92,25 +95,30 @@ export default function App() {
     setOutput("Running...");
     setError("");
     setErrorType("");
+    setExecutionTime("");
+    setMemoryUsed("");
 
     try {
       const res = await axios.post(
         `${API}/run`,
-        { code: activeCode, language },
+        { code: activeCode, language, stdin },
         { headers: authHeaders() }
       );
       const data = res.data;
       if (data.success) {
-        setOutput(data.output || "No output");
+        setOutput(data.output || "No output generated");
         setError("");
+        setErrorType("");
       } else {
-        setError(data.message || "Error");
-        setErrorType(data.errorType || "Error");
+        setError(data.error || data.message || "Error");
+        setErrorType(data.errorType || "Execution Error");
         setOutput("");
       }
+      setExecutionTime(data.executionTime || "");
+      setMemoryUsed(data.memoryUsed || "");
     } catch (err) {
       if (err.response && err.response.data) {
-        setError(err.response.data.message || "Execution failed");
+        setError(err.response.data.message || err.response.data.error || "Execution failed");
         setErrorType(err.response.data.errorType || "Error");
       } else {
         setError("Could not connect to server");
@@ -257,7 +265,7 @@ export default function App() {
       <div style={{ height: "52px", background: "#111827", borderBottom: "1px solid #1f2937", display: "flex", alignItems: "center", padding: "0 16px", gap: "10px", flexShrink: 0 }}>
         <img
           src={logo}
-          alt="OnlineCodX"
+          alt="ComView"
           onClick={() => navigate("/dashboard")}
           style={{ height: "32px", cursor: "pointer", marginRight: "8px", borderRadius: "6px" }}
         />
@@ -398,9 +406,19 @@ export default function App() {
             )}
           </div>
 
-          {/* Output panel */}
+          {/* Output & Input panel */}
           {!isViewerMode && (
-            <OutputPanel output={output} error={error} errorType={errorType} />
+            <OutputPanel
+              stdin={stdin}
+              setStdin={setStdin}
+              output={output}
+              error={error}
+              errorType={errorType}
+              executionTime={executionTime}
+              memoryUsed={memoryUsed}
+              onRun={handleRun}
+              running={running}
+            />
           )}
         </div>
       </div>

@@ -11,6 +11,7 @@ import ResetPassword from "./pages/ResetPassword";
 import Dashboard from "./pages/Dashboard";
 import App from "./App";
 import DocumentEditor from "./components/DocumentEditor";
+import FileViewer from "./pages/FileViewer";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
@@ -47,6 +48,14 @@ root.render(
         element={
           <ProtectedRoute>
             <DocumentEditor />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/file-viewer"
+        element={
+          <ProtectedRoute>
+            <FileViewer />
           </ProtectedRoute>
         }
       />

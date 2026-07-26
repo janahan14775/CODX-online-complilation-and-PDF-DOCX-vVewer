@@ -93,7 +93,7 @@ exports.register = async (req, res) => {
       subject:
         "Email Verification OTP",
       html: `
-        <h2>Welcome to Online IDE</h2>
+        <h2>Welcome to ComView</h2>
         <p>Your OTP is:</p>
         <h1>${otp}</h1>
       `,

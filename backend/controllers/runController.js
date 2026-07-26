@@ -1,11 +1,12 @@
 exports.runCode = async (req, res) => {
   try {
-    const { code, language } = req.body;
+    const { code, language, stdin } = req.body;
 
     if (!code || !language) {
       return res.status(400).json({
         success: false,
-        error: "Code and language are required",
+        errorType: "Invalid Input",
+        message: "Code and language are required",
       });
     }
 
@@ -22,7 +23,8 @@ exports.runCode = async (req, res) => {
     if (!jDoodleConfig) {
       return res.status(400).json({
         success: false,
-        error: "Unsupported language",
+        errorType: "Unsupported Language",
+        message: `Language '${language}' is not supported. Supported languages are C, C++, Java, Python, and JavaScript.`,
       });
     }
 
@@ -37,17 +39,21 @@ exports.runCode = async (req, res) => {
       });
     }
 
-    // Prepare payload for JDoodle API
+    // Unescape literal \n or \t sequences entered by user in the input textarea
+    const processedStdin = (stdin || "").replace(/\\n/g, "\n").replace(/\\t/g, "\t");
+
+    // Prepare payload for JDoodle API including stdin for interactive input
     const url = "https://api.jdoodle.com/v1/execute";
     const payload = {
       clientId,
       clientSecret,
       script: code,
+      stdin: processedStdin,
       language: jDoodleConfig.lang,
       versionIndex: jDoodleConfig.versionIndex,
     };
 
-    console.log("Sending payload to JDoodle:", { ...payload, clientSecret: "***" });
+    console.log("Sending payload to JDoodle (language:", jDoodleConfig.lang, ", stdin length:", (stdin || "").length, ")");
 
     const response = await fetch(url, {
       method: "POST",
@@ -56,8 +62,6 @@ exports.runCode = async (req, res) => {
       },
       body: JSON.stringify(payload),
     });
-
-    console.log("JDoodle Response Status:", response.status);
 
     if (!response.ok) {
       const errText = await response.text();
@@ -74,9 +78,8 @@ exports.runCode = async (req, res) => {
 
       return res.status(500).json({
         success: false,
-        errorType: "Internal Server Error",
+        errorType: "Server Error",
         message: `JDoodle Error: ${parsedMsg}`,
-        debug: errText
       });
     }
 
@@ -90,13 +93,78 @@ exports.runCode = async (req, res) => {
       });
     }
 
-    // JDoodle outputs memory in bytes and cpuTime in seconds
-    const memoryUsed = data.memory ? `${(data.memory / 1024).toFixed(2)}MB` : "N/A";
+    const outputText = data.output || "";
+    const memoryUsed = data.memory ? `${(data.memory / 1024).toFixed(2)} MB` : "N/A";
     const executionTime = data.cpuTime ? `${data.cpuTime}s` : "N/A";
+
+    // Classify error types if any
+    let errorType = null;
+    let isError = false;
+
+    if (
+      outputText.includes("Command terminated by signal 9") ||
+      outputText.includes("Time Limit Exceeded") ||
+      outputText.includes("JDoodle - Timeout") ||
+      outputText.includes("Execution Timed Out") ||
+      outputText.includes("CPU time limit exceeded") ||
+      data.statusCode === 137
+    ) {
+      isError = true;
+      errorType = "Time Limit Exceeded";
+    } else if (outputText.includes("Segmentation fault") || outputText.includes("SIGSEGV") || outputText.includes("segmentation fault")) {
+      isError = true;
+      errorType = "Segmentation Fault";
+    } else if (outputText.includes("StackOverflowError") || outputText.includes("stack overflow") || outputText.includes("RecursionError")) {
+      isError = true;
+      errorType = "Stack Overflow";
+    } else if (outputText.includes("OutOfMemoryError") || outputText.includes("Memory Limit Exceeded") || outputText.includes("std::bad_alloc") || outputText.includes("std::length_error")) {
+      isError = true;
+      errorType = "Memory Limit Exceeded";
+    } else if (
+      outputText.includes("error:") ||
+      outputText.includes("SyntaxError:") ||
+      outputText.includes("compilation error") ||
+      outputText.includes("cannot find symbol") ||
+      outputText.includes("fatal error:") ||
+      outputText.includes("IndentationError:")
+    ) {
+      isError = true;
+      errorType = "Compilation Error";
+    } else if (
+      outputText.includes("Command terminated by signal") ||
+      outputText.includes("terminate called") ||
+      outputText.includes("what():") ||
+      outputText.includes("SIGABRT") ||
+      outputText.includes("Exception in thread") ||
+      outputText.includes("Traceback (most recent call last)") ||
+      outputText.includes("RuntimeError") ||
+      outputText.includes("TypeError:") ||
+      outputText.includes("ReferenceError:") ||
+      outputText.includes("ZeroDivisionError") ||
+      outputText.includes("std::out_of_range") ||
+      outputText.includes("std::invalid_argument") ||
+      outputText.includes("uncaught exception")
+    ) {
+      isError = true;
+      errorType = "Runtime Error";
+    }
+
+    if (isError) {
+      return res.json({
+        success: false,
+        output: "",
+        error: outputText,
+        errorType: errorType || "Runtime Error",
+        executionTime,
+        memoryUsed,
+      });
+    }
 
     return res.json({
       success: true,
-      output: data.output || "",
+      output: outputText,
+      error: "",
+      errorType: null,
       executionTime,
       memoryUsed,
     });

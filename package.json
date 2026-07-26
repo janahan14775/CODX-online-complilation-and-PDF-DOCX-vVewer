@@ -1,7 +1,7 @@
 {
-  "name": "onlinecodx",
+  "name": "comview",
   "version": "1.0.0",
-  "description": "OnlineCodX Cloud IDE",
+  "description": "ComView — Code. Document. View.",
   "scripts": {
     "build": "npm install --prefix backend --legacy-peer-deps && npm install --prefix frontend --legacy-peer-deps && npm run build --prefix frontend",
     "start": "npm start --prefix backend"

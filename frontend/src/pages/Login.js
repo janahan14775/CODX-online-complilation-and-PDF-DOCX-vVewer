@@ -96,7 +96,7 @@ function Login() {
         className="d-none d-lg-flex"
       >
         <div style={{ color: "white" }}>
-          <img src={logo} alt="OnlineCodX" style={{ height: "64px", marginBottom: "20px", borderRadius: "12px" }} />
+          <img src={logo} alt="ComView" style={{ height: "64px", marginBottom: "20px", borderRadius: "12px" }} />
           <p style={{ fontSize: "18px", opacity: 0.9, lineHeight: 1.6, marginBottom: "32px" }}>
             A professional cloud-based IDE and document management platform.
             Write, compile, and execute code in 5 languages.
@@ -116,7 +116,7 @@ function Login() {
         <div style={{ width: "100%" }}>
           <div style={{ marginBottom: "32px" }}>
             <h2 style={{ color: "white", fontWeight: 700, fontSize: "28px", marginBottom: "8px" }}>Welcome back</h2>
-            <p style={{ color: "#64748b" }}>Sign in to your OnlineCodX account</p>
+            <p style={{ color: "#64748b" }}>Sign in to your ComView account</p>
           </div>
 
           {error && (
